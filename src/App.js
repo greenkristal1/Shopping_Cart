@@ -11,17 +11,18 @@ function App() {
   const [cartList, setCartList] = useState([]);
 
   function handleSend(sentItem) {
-    setCartList((list) =>
-      list.slice().filter((item) => (item.id === sentItem.id ? false : true))
-    );
-    setCartList((list) => [...list, sentItem]);
+    setCartList((list) => {
+      let newList = list.slice().filter((item) => !(item.id === sentItem.id));
+      if (sentItem.number === 0) return newList;
+      return [...newList, sentItem];
+    });
   }
   return (
     <>
       <Header />
       <main>
         <MainSide data={initialItems} onSend={handleSend} />
-        <CartList />
+        <CartList cartList={cartList} />
       </main>
     </>
   );
@@ -59,20 +60,24 @@ function ProductList({ data, onSend }) {
 function Product({ item, onSend }) {
   const [productQuantity, setProductQuantity] = useState(0);
   function handlePlus() {
+    let quan = productQuantity + 1;
     setProductQuantity((i) => i + 1);
-    sendToCart(productQuantity);
+    sendToCart(quan);
   }
   function handleMinus() {
+    if (!productQuantity) return;
+    let quan = productQuantity - 1;
     setProductQuantity((i) => (i > 0 ? i - 1 : i));
-    sendToCart(productQuantity);
+    sendToCart(quan);
   }
   function sendToCart(number) {
     const updatedProd = {
       id: item.id,
       name: item.name,
       number,
+      price: item.price,
     };
-    console.log(updatedProd);
+
     onSend(updatedProd);
   }
 
@@ -93,15 +98,32 @@ function Button({ children, onClick }) {
   return <button onClick={onClick}>{children}</button>;
 }
 
-function CartList() {
+function CartList({ cartList }) {
+  const total_price = cartList.reduce((sum, current) => {
+    return sum + current.price * current.number;
+  }, 0);
   return (
     <div className="sidebar">
       <div className="cart-title">Shopping cart</div>
       <div className="cart-list">
         Chosen products:
+        {cartList.map((item) => (
+          <div>
+            {item.name} X{item.number}
+          </div>
+        ))}
         <br />
       </div>
-      <div className="total-price">X</div>
+      <div className="total-price">Total price: ${total_price}</div>
+    </div>
+  );
+}
+
+function CartItem({ item }) {
+  return (
+    <div>
+      <span>{item.name}</span>
+      <span>X{item.number}</span>
     </div>
   );
 }
